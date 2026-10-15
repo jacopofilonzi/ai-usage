@@ -10,12 +10,13 @@ CROSS_PKGS := ./internal/config/... ./internal/provider/... ./internal/wakelock/
 WAILS_PKGS := . ./internal/app/... ./internal/tray/...
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev build bindings frontend frontend-check test fmt fmt-check vet vet-linux vet-darwin check
+.PHONY: help setup dev build package bindings frontend frontend-check test fmt fmt-check vet vet-linux vet-darwin check
 
 help:
 	@echo make setup            install frontend dependencies (once, and after package.json changes)
 	@echo make dev              run the app with hot reload (wails3 dev)
 	@echo make build            production build into bin/
+	@echo make package          production build + installer/packages for this OS into bin/ (see scripts/)
 	@echo make bindings         regenerate the TypeScript bindings in frontend/bindings
 	@echo make test             Go unit tests
 	@echo make fmt              format the Go code
@@ -29,6 +30,10 @@ dev:
 
 build:
 	wails3 task build
+
+# Windows needs makensis on PATH; scripts/build-windows.bat also finds NSIS in its default folder.
+package:
+	wails3 task package INSTALL_SCOPE=user
 
 bindings:
 	wails3 generate bindings -clean=true -ts -i

@@ -5,11 +5,11 @@
 	"info": {
 		"0000": {
 			"ProductVersion": "0.1.0",
-			"CompanyName": "My Company",
-			"FileDescription": "A ai-usage application",
-			"LegalCopyright": "© 2026, My Company",
-			"ProductName": "My Product",
-			"Comments": "This is a comment"
+			"CompanyName": "Jacopo Filonzi",
+			"FileDescription": "Usage limits of AI coding agents, plus a wake lock",
+			"LegalCopyright": "(c) 2026, Jacopo Filonzi",
+			"ProductName": "AI Usage",
+			"Comments": ""
 		}
 	}
 }

@@ -123,9 +123,9 @@ and align this project's copies with it:
 ## Versions and releases
 
 - Versions are `x.y.z`: `x` major (only when I decide), `y` feature, `z` fix. A feature bumps `y` and resets `z`.
-- The version is `internal/app.Version`, set at build time with
-  `-ldflags "-X github.com/jacopofilonzi/ai-usage/internal/app.Version=x.y.z"`, and `build/config.yml` (`info.version`).
-  There is no set-version script yet: add one before the first release.
+- The version lives in `build/config.yml` (`info.version`). The Taskfile reads it and stamps it into
+  `internal/app.Version` (`-X` ldflags) on production builds, and the installer metadata come from the same file.
+  After changing it run `wails3 task common:update:build-assets` (then delete the generated `build/ios/`).
 - Tags and releases only when I ask.
 
 ## Adding a provider

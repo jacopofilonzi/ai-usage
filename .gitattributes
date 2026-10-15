@@ -3,3 +3,4 @@
 *.ico binary
 *.icns binary
 *.car binary
+*.bat text eol=crlf

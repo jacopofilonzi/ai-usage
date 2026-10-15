@@ -3,26 +3,26 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "ai-usage.exe"
+name: "ai-usage"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
-description: "A ai-usage application"
-vendor: "My Company"
+description: "Usage limits of AI coding agents, plus a wake lock"
+vendor: "Jacopo Filonzi"
 homepage: "https://wails.io"
 license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/ai-usage.exe"
-    dst: "/usr/local/bin/ai-usage.exe"
+  - src: "./bin/ai-usage"
+    dst: "/usr/local/bin/ai-usage"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/ai-usage.exe.png"
-  - src: "./build/linux/ai-usage.exe.desktop"
-    dst: "/usr/share/applications/ai-usage.exe.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/ai-usage.png"
+  - src: "./build/linux/ai-usage.desktop"
+    dst: "/usr/share/applications/ai-usage.desktop"
 
 # Default dependencies for the GTK4 + WebKitGTK 6.0 stack (Ubuntu 24.04+ / Debian 13+)
 depends:

@@ -1,13 +1,13 @@
 [Desktop Entry]
 Version=1.0
-Name=My Product
-Comment=A ai-usage application
+Name=AI Usage
+Comment=Usage limits of AI coding agents, plus a wake lock
 # The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/ai-usage.exe %u
+Exec=/usr/local/bin/ai-usage %u
 Terminal=false
 Type=Application
-Icon=ai-usage.exe
+Icon=ai-usage
 Categories=Utility;
-StartupWMClass=ai-usage.exe
+StartupWMClass=ai-usage
 
  
