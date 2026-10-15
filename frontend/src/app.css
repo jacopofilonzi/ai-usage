@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* The widget window is transparent: only what the view draws is visible. */
+html[data-view="widget"],
+html[data-view="widget"] body {
+  background: transparent;
+}
