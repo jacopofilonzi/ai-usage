@@ -150,7 +150,7 @@ and align this project's copies with it:
 - Wails has no display-change event on Windows: the widgets listen to `WM_DISPLAYCHANGE` and
   `WM_SETTINGCHANGE`/`SPI_SETWORKAREA` through `WndProcInterceptor`.
 - Wails screen IDs on Windows come from HMONITOR handles and change across reboots: `config.monitor` stores the
-  device name (`\.DISPLAY1`).
+  device name (`\\.\DISPLAY1`).
 - Widgets are placed and hit-tested in physical pixels (`PhysicalWorkArea`), not DIP, because Wails' DIP layout
   is approximate on mixed-DPI setups.
 - A click-through window receives no mouse messages: hover is detected by a cursor ticker in Go and sent as the
