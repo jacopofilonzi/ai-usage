@@ -7,14 +7,11 @@ instead of re-reading the whole repo.
 These guidelines come from a shared template: https://github.com/jacopofilonzi/agents-guideline.
 See "Updating these guidelines" below to align them with the latest version.
 
-<!--
-Template: "Workflow", "Code" and "Testing" are my default style; keep them unless the project needs
-something different. Fill in or delete every <PLACEHOLDER> section, then delete these comments.
--->
-
 ## What it is
 
-<PROJECT>: <one sentence>. Stack: <language + framework + versions>. Targets: <Linux server / Windows, macOS, Linux / …>.
+AI Usage: a tray app that shows the usage limits of one AI coding agent at a time (Claude Code, Codex) and
+can keep the computer awake. Stack: Go 1.26 + Wails 3 (v3.0.0-beta.29), Svelte 5 + Tailwind 4 + TypeScript 6.
+Targets: Windows (primary; corner widget), macOS and Linux (usage rings in the tray icon).
 
 ## Workflow
 
@@ -77,12 +74,16 @@ and align this project's copies with it:
 
 ## Invariants — don't break these
 
-<!-- Rules that aren't obvious from the code and would cause real damage if broken. Say WHY when it isn't obvious. Examples: -->
-- <Secrets/tokens are never logged or returned; they live in a redacted `Secret` type.>
-- <Optional services (cache, Redis…) never fail a request: errors degrade to a miss; the server starts without them.>
-- <Bump `<CACHE_KEY_VERSION>` whenever a cached payload shape changes.>
-- <When backend API models change, update the frontend types in the same change.>
-- <Durable data (SQLite, user files) is not cache: formats and IDs stay stable and backward compatible.>
+- **Tokens belong to the installed agents.** Providers only read the token the agent keeps on disk, re-read it on
+  every poll and use it for the request. Never refresh, store, cache, log or return it, and never put it in an
+  error. An expired token means status `stale` ("open the agent to refresh"), not a refresh.
+- The Claude usage endpoint is undocumented and rate limited: keep polling at ≥ 30 s (2 min default) and honour 429.
+- `internal/app/contract.go` and the method signatures in `internal/app/services.go` are the frontend contract:
+  change them only together with the frontend, and run `make bindings` (the bindings are committed).
+- Only one provider is shown at a time; the UI renders one ring per `Limit` and never branches on the provider.
+- `config.json` is durable user data: field names stay stable, unknown or invalid values fall back to defaults.
+- Calls into Wails (windows, tray, events) are never made while holding `App.mu`: Wails setters block on the UI
+  thread, whose callbacks may need the lock.
 
 ## Code
 
@@ -98,17 +99,19 @@ and align this project's copies with it:
 - Reuse shared clients and connections (HTTP client, DB pool) instead of creating them per request.
 - **Dependencies are recent majors whose APIs differ from most online examples:** check the docs for the
   installed version before using an API. Ask before adding a new dependency.
-  <List pinned or unusual versions here, e.g. "axum 0.8 (`{param}` path syntax)", "TypeScript pinned to 6.x: don't upgrade".>
+  Wails 3 is a beta (v3.0.0-beta.29): read its source in the Go module cache before using an API.
+  TypeScript is pinned to 6.x because svelte-check does not support 7 yet. Frontend versions are exact pins.
 - Deleting user data means moving it to the trash / soft delete, unless agreed otherwise.
 
 ### UI
 
-<!-- Delete if the project has no UI. -->
-- Every UI string goes through i18n, with both the English and the Italian key (`<DEFAULT_LANG>` is the
-  default); the type check must catch a missing key.
+- Every UI string goes through i18n, with both the English and the Italian key (English is the
+  default and the fallback). Two separate dictionaries: `internal/i18n` (tray menu, tooltip) and
+  `frontend/src/lib/i18n.ts` (windows); the type check must catch a missing key.
 - Svelte 5 runes only (`$state`, `$derived`, `$effect`, `$props`): no legacy stores or `export let`.
 - Tailwind 4: reusable classes are `@utility` in the global CSS.
-- Never hard-code base paths or the API prefix: build URLs from the shared base constant.
+- All data comes from the bound services and events (see STRUCTURE.md): the frontend never reads files or
+  calls the network.
 
 ## Testing
 
@@ -119,17 +122,21 @@ and align this project's copies with it:
 
 ## Versions and releases
 
-<!-- Delete if the project isn't versioned. -->
 - Versions are `x.y.z`: `x` major (only when I decide), `y` feature, `z` fix. A feature bumps `y` and resets `z`.
-- The version lives in <FILES>: change it only with `<scripts/set-version.sh x.y.z>`, which updates them all.
+- The version is `internal/app.Version`, set at build time with
+  `-ldflags "-X github.com/jacopofilonzi/ai-usage/internal/app.Version=x.y.z"`, and `build/config.yml` (`info.version`).
+  There is no set-version script yet: add one before the first release.
 - Tags and releases only when I ask.
 
-## <Recipe, e.g. "Adding a <thing>">
+## Adding a provider
 
-<!-- Step-by-step for extension points that will be repeated (new provider, new step type, new integration…). -->
-1. <Create `<path>` implementing `<Trait>`.>
-2. <Register it in `<file>`.>
-3. <Add tests with fixtures.>
+1. Create `internal/provider/<id>/` with a type implementing `provider.Provider`: `Detect` checks the agent's
+   data dir, `Poll` returns `[]provider.Limit` and maps failures to `ErrNotLoggedIn` / `ErrUnauthorized` /
+   `*RateLimitedError`. Use `Kind` so the UI can label the limit; only report limits a user recognises.
+2. Add it to the provider list in `internal/app/app.go` (`a.all`).
+3. Add tests against fixtures in `testdata/` (real responses with anything personal removed).
+4. Add its package to `CROSS_PKGS` in the Makefile if it is not under `internal/provider/...`, and document it in
+   STRUCTURE.md.
 
 ## Known pitfalls
 
@@ -137,4 +144,17 @@ and align this project's copies with it:
 - **Git Bash rewrites env values that look like paths** (`BASE_PATH=/x` becomes `C:/Program Files/Git/x`):
   prefix the command with `MSYS2_ENV_CONV_EXCL='*'`, or set the value in `.env`.
 - A running `.exe` locks its binary on Windows: stop it before rebuilding.
-- <Project-specific gotchas: framework quirks, things that look like bugs but are intentional.>
+- **Wails transparent frameless windows on Windows:** creating a window with `IgnoreMouseEvents: true` gives it an
+  opaque classic frame, and frameless decorations draw a ghost caption. Create it normally with
+  `Windows.DisableFramelessWindowDecorations: true`, then call `SetIgnoreMouseEvents(true)`.
+- Wails has no display-change event on Windows: the widgets listen to `WM_DISPLAYCHANGE` and
+  `WM_SETTINGCHANGE`/`SPI_SETWORKAREA` through `WndProcInterceptor`.
+- Wails screen IDs on Windows come from HMONITOR handles and change across reboots: `config.monitor` stores the
+  device name (`\.DISPLAY1`).
+- Widgets are placed and hit-tested in physical pixels (`PhysicalWorkArea`), not DIP, because Wails' DIP layout
+  is approximate on mixed-DPI setups.
+- A click-through window receives no mouse messages: hover is detected by a cursor ticker in Go and sent as the
+  `widget:hover` event; the frontend never uses DOM hover for the widget.
+- `go vet` for Linux/macOS of packages importing Wails needs `-tags server` (cgo-free build); `make check` does it.
+- The Claude usage response contains codenamed and dollar-based windows (`iguana_necktie`, …): they are filtered
+  out on purpose.
