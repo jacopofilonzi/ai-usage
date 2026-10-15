@@ -55,8 +55,9 @@ func TestParseUsageReal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(limits) != 3 {
-		t.Fatalf("got %d limits, want 3: %+v", len(limits), limits)
+	// Codenamed and dollar-based windows (iguana_necktie, …) are dropped.
+	if len(limits) != 2 {
+		t.Fatalf("got %d limits, want 2: %+v", len(limits), limits)
 	}
 	s := limits[0]
 	if s.ID != "five_hour" || s.Kind != provider.KindSession || s.WindowMinutes != 300 || s.UsedPct != 15 {
@@ -70,10 +71,6 @@ func TestParseUsageReal(t *testing.T) {
 	if w.ID != "seven_day" || w.Kind != provider.KindWeekly || w.WindowMinutes != 10080 || w.UsedPct != 58 {
 		t.Errorf("weekly = %+v", w)
 	}
-	o := limits[2]
-	if o.ID != "iguana_necktie" || o.Kind != provider.KindOther || o.WindowMinutes != 0 || o.ResetsAt == nil {
-		t.Errorf("other = %+v", o)
-	}
 }
 
 func TestParseUsageModelsAndOddities(t *testing.T) {
@@ -85,7 +82,7 @@ func TestParseUsageModelsAndOddities(t *testing.T) {
 	for _, l := range limits {
 		ids = append(ids, l.ID)
 	}
-	want := "five_hour,seven_day,seven_day_opus,seven_day_sonnet,brand_new_window"
+	want := "five_hour,seven_day,seven_day_opus,seven_day_sonnet" // brand_new_window is unknown: dropped
 	if got := strings.Join(ids, ","); got != want {
 		t.Fatalf("order = %s, want %s", got, want)
 	}
@@ -99,8 +96,12 @@ func TestParseUsageModelsAndOddities(t *testing.T) {
 	if opus.Kind != provider.KindWeeklyModel || opus.Model != "opus" || opus.WindowMinutes != 10080 || opus.UsedPct != 40.25 {
 		t.Errorf("opus = %+v", opus)
 	}
-	if limits[4].Kind != provider.KindOther || limits[4].ResetsAt != nil {
-		t.Errorf("unknown window with bad date = %+v", limits[4])
+}
+
+func TestParseResetsAtToleratesBadDates(t *testing.T) {
+	bad := "not-a-date"
+	if got := parseResetsAt("five_hour", &bad); got != nil {
+		t.Errorf("bad date = %v, want nil", got)
 	}
 }
 
@@ -134,7 +135,7 @@ func TestPollSuccessSendsHeaders(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(limits) != 3 {
+	if len(limits) != 2 {
 		t.Fatalf("got %d limits", len(limits))
 	}
 }

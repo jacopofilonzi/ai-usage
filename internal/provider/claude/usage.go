@@ -20,6 +20,9 @@ const (
 	weeklyMinutes  = 7 * 24 * 60
 )
 
+// knownModels are the per-model weekly windows worth a ring.
+var knownModels = map[string]bool{"opus": true, "sonnet": true}
+
 // window is one usage window object. Other fields (dollar amounts, locked_reason, ...) are ignored.
 type window struct {
 	Utilization *float64 `json:"utilization"` // already 0–100 (observed: 15.0 alongside "percent":15)
@@ -27,7 +30,9 @@ type window struct {
 }
 
 // parseUsage turns the usage response into limits, in the stable order session, weekly,
-// weekly_model (by model), other (by id).
+// weekly_model (by model). The response also carries codenamed and dollar-based allowances
+// ("iguana_necktie", "seven_day_cowork", …) whose ids mean nothing to a user: only the windows
+// in knownModels and the two plan-wide ones are shown.
 func parseUsage(body []byte) ([]provider.Limit, error) {
 	var top map[string]json.RawMessage
 	if err := json.Unmarshal(body, &top); err != nil {
@@ -45,11 +50,11 @@ func parseUsage(body []byte) ([]provider.Limit, error) {
 			l.Kind, l.WindowMinutes = provider.KindSession, sessionMinutes
 		case key == keyWeekly:
 			l.Kind, l.WindowMinutes = provider.KindWeekly, weeklyMinutes
-		case strings.HasPrefix(key, weeklyModelPrefix) && len(key) > len(weeklyModelPrefix):
+		case strings.HasPrefix(key, weeklyModelPrefix) && knownModels[strings.TrimPrefix(key, weeklyModelPrefix)]:
 			l.Kind, l.WindowMinutes = provider.KindWeeklyModel, weeklyMinutes
 			l.Model = strings.TrimPrefix(key, weeklyModelPrefix)
 		default:
-			l.Kind = provider.KindOther
+			continue
 		}
 		limits = append(limits, l)
 	}
