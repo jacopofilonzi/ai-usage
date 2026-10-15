@@ -2,7 +2,7 @@
 # Environment for the go tool is set with target-specific exports instead.
 
 # Packages without Wails (which needs cgo on Linux/macOS): vetted for every OS from any host.
-CROSS_PKGS := ./internal/config/... ./internal/provider/... ./internal/wakelock/...
+CROSS_PKGS := ./internal/config/... ./internal/provider/... ./internal/wakelock/... ./internal/logging/... ./internal/autostart/...
 
 .DEFAULT_GOAL := help
 .PHONY: help setup dev build bindings frontend frontend-check test fmt fmt-check vet vet-linux vet-darwin check
