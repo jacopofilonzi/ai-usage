@@ -37,6 +37,7 @@ const LanguageSystem = "system"
 type Config struct {
 	Provider     string `json:"provider"`      // Provider.ID(); "" = first detected
 	Corner       Corner `json:"corner"`        // widget corner (Windows)
+	AlwaysShow   bool   `json:"always_show"`   // widget always drawn; otherwise revealed by the hot corner (Windows)
 	Monitor      string `json:"monitor"`       // MonitorPrimary, MonitorAll or a screen ID (Windows)
 	Language     string `json:"language"`      // LanguageSystem, "en", "it"
 	PollSeconds  int    `json:"poll_seconds"`  // 0 = provider default

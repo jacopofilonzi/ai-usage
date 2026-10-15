@@ -13,6 +13,11 @@ export interface Config {
     "corner": Corner;
 
     /**
+     * widget always drawn; otherwise revealed by the hot corner (Windows)
+     */
+    "always_show": boolean;
+
+    /**
      * MonitorPrimary, MonitorAll or a screen ID (Windows)
      */
     "monitor": string;

@@ -58,13 +58,13 @@ func TestScreenKeyAndName(t *testing.T) {
 }
 
 func TestWidgetBounds(t *testing.T) {
-	// 1920×1040 work area (taskbar at the bottom) at 150%.
+	// 1920×1040 work area (taskbar at the bottom) at 150%: 72 DIP = 108 px.
 	work := application.Rect{X: 0, Y: 0, Width: 1920, Height: 1040}
 	cases := map[config.Corner]application.Rect{
-		config.TopLeft:     {X: 0, Y: 0, Width: 300, Height: 300},
-		config.TopRight:    {X: 1620, Y: 0, Width: 300, Height: 300},
-		config.BottomLeft:  {X: 0, Y: 740, Width: 300, Height: 300},
-		config.BottomRight: {X: 1620, Y: 740, Width: 300, Height: 300},
+		config.TopLeft:     {X: 0, Y: 0, Width: 108, Height: 108},
+		config.TopRight:    {X: 1812, Y: 0, Width: 108, Height: 108},
+		config.BottomLeft:  {X: 0, Y: 932, Width: 108, Height: 108},
+		config.BottomRight: {X: 1812, Y: 932, Width: 108, Height: 108},
 	}
 	for corner, want := range cases {
 		if got := widgetBounds(work, 1.5, corner); got != want {
@@ -73,39 +73,53 @@ func TestWidgetBounds(t *testing.T) {
 	}
 	// Secondary screen left of the primary, negative coordinates.
 	got := widgetBounds(application.Rect{X: -1280, Y: 0, Width: 1280, Height: 1024}, 1, config.BottomRight)
-	if want := (application.Rect{X: -200, Y: 824, Width: 200, Height: 200}); got != want {
+	if want := (application.Rect{X: -72, Y: 952, Width: 72, Height: 72}); got != want {
 		t.Errorf("negative origin: %+v, want %+v", got, want)
 	}
 }
 
-func TestNextHover(t *testing.T) {
-	r := widgetBounds(application.Rect{Width: 1920, Height: 1040}, 1.5, config.BottomRight)
-	cx, cy := r.X+r.Width, r.Y+r.Height // the corner, just outside the window
+func TestNextRevealed(t *testing.T) {
+	// 1920×1080 screen at 150%, taskbar 60 px at the bottom: work area 1920×1020.
+	screen := application.Rect{Width: 1920, Height: 1080}
+	r := widgetBounds(application.Rect{Width: 1920, Height: 1020}, 1.5, config.BottomRight)
+	wx, wy := r.X+r.Width, r.Y+r.Height
 
-	// 50 DIP from the corner (75 px at 150%): inside the collapsed radius.
-	near := 53 // ≈ 50·1.5/√2
-	if !nextHover(false, cx-near, cy-near, r, config.BottomRight, 1.5) {
-		t.Error("cursor near the corner must enter")
+	// On the widget but not in the hot corner: stays hidden.
+	if nextRevealed(false, wx-20, wy-20, r, screen, config.BottomRight, 1.5) {
+		t.Error("a hidden widget must not appear when the cursor is merely on it")
 	}
-	// 100 DIP away: outside the collapsed radius, inside the expanded one.
-	mid := 106 // ≈ 100·1.5/√2
-	if nextHover(false, cx-mid, cy-mid, r, config.BottomRight, 1.5) {
-		t.Error("must not enter beyond the collapsed radius")
+	// Pushed into the screen corner (on the taskbar): revealed.
+	if !nextRevealed(false, 1919, 1079, r, screen, config.BottomRight, 1.5) {
+		t.Error("the screen corner must reveal")
 	}
-	if !nextHover(true, cx-mid, cy-mid, r, config.BottomRight, 1.5) {
-		t.Error("must stay within the expanded radius")
+	// Moving up from the taskbar onto the widget keeps it revealed.
+	if !nextRevealed(true, wx-20, wy+30, r, screen, config.BottomRight, 1.5) {
+		t.Error("the way from the screen corner to the widget must keep it revealed")
 	}
-	// Window's far corner: beyond the expanded radius.
-	if nextHover(true, r.X, r.Y, r, config.BottomRight, 1.5) {
-		t.Error("must leave beyond the expanded radius")
+	if !nextRevealed(true, wx-60, wy-60, r, screen, config.BottomRight, 1.5) {
+		t.Error("on the disc must keep it revealed")
 	}
-	// Just below the work area (on the taskbar) is outside the window.
-	if nextHover(true, cx-5, cy+2, r, config.BottomRight, 1.5) {
-		t.Error("cursor outside the window must not hover")
+	// Far away: hidden again.
+	if nextRevealed(true, 900, 500, r, screen, config.BottomRight, 1.5) {
+		t.Error("moving away must hide")
 	}
 
-	tl := widgetBounds(application.Rect{X: 100, Y: 50, Width: 800, Height: 600}, 1, config.TopLeft)
-	if !nextHover(false, 110, 60, tl, config.TopLeft, 1) {
-		t.Error("top-left corner")
+	tl := application.Rect{X: 100, Y: 50, Width: 800, Height: 600}
+	if !nextRevealed(false, 102, 52, widgetBounds(tl, 1, config.TopLeft), tl, config.TopLeft, 1) {
+		t.Error("top-left hot corner")
+	}
+}
+
+func TestOnDisc(t *testing.T) {
+	r := widgetBounds(application.Rect{Width: 1920, Height: 1020}, 1, config.BottomRight)
+	wx, wy := r.X+r.Width, r.Y+r.Height
+	if !onDisc(wx-30, wy-30, r, config.BottomRight, 1) {
+		t.Error("inside the radius")
+	}
+	if onDisc(r.X, r.Y, r, config.BottomRight, 1) {
+		t.Error("the window's far corner is outside the disc")
+	}
+	if onDisc(wx-5, wy+2, r, config.BottomRight, 1) {
+		t.Error("outside the window")
 	}
 }

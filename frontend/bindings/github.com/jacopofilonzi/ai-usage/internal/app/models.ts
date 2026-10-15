@@ -55,24 +55,28 @@ export interface Settings {
 
 /**
  * Geometry of the corner widget, in DIP. The widget window is a Size×Size square whose outer corner
- * sits on the screen corner (inside the work area). The interactive area is the quarter disc
- * centred on that corner: the cursor enters at CollapsedRadius and, once expanded, leaves beyond
- * ExpandedRadius. Go uses this for click-through; the frontend draws with the same numbers.
+ * sits on the configured corner of the screen's work area; the widget is the quarter disc of
+ * Radius centred on that corner. The frontend draws with these numbers; Go uses them for:
+ *   - reveal: the cursor gets within WidgetHotCorner of the screen's real corner (which, with the
+ *     taskbar on that edge, is on the taskbar), and stays revealed while within
+ *     Radius+WidgetLeaveMargin of the widget's corner;
+ *   - click-through: the window takes the mouse (wheel, right-click) only while the widget is
+ *     shown and the cursor is on the disc, so a hidden widget never blocks what is under it.
  */
 export interface WidgetGeometry {
     "corner": config$0.Corner;
     "size": number;
-    "collapsedRadius": number;
-    "expandedRadius": number;
+    "radius": number;
 }
 
 /**
- * WidgetHover tells one widget window that the cursor entered or left its interactive area.
+ * WidgetReveal tells one widget window that it was revealed (cursor pushed into the screen
+ * corner) or hidden again (cursor moved away). With config.AlwaysShow the widget is drawn anyway.
  */
-export interface WidgetHover {
+export interface WidgetReveal {
     /**
      * the widget window's name; each widget filters on its own
      */
     "window": string;
-    "hover": boolean;
+    "revealed": boolean;
 }

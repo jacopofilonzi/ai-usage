@@ -18,7 +18,7 @@ func TestLoadMissingFileGivesDefaults(t *testing.T) {
 
 func TestSaveLoadRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "sub", "config.json")
-	want := Config{Provider: "codex", Corner: TopLeft, Monitor: MonitorAll, Language: "it", PollSeconds: 120, KeepUnlocked: true}
+	want := Config{Provider: "codex", Corner: TopLeft, AlwaysShow: true, Monitor: MonitorAll, Language: "it", PollSeconds: 120, KeepUnlocked: true}
 	if err := Save(path, want); err != nil {
 		t.Fatal(err)
 	}

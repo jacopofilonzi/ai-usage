@@ -21,7 +21,7 @@ declare module "@wailsio/runtime" {
             "settings:changed": app$0.Settings;
             "usage:snapshot": provider$0.Snapshot;
             "wakelock:status": wakelock$0.Status;
-            "widget:hover": app$0.WidgetHover;
+            "widget:reveal": app$0.WidgetReveal;
         }
     }
 }

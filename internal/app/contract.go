@@ -36,27 +36,32 @@ type Settings struct {
 	Screens   []ScreenInfo   `json:"screens"`
 }
 
-// WidgetHover tells one widget window that the cursor entered or left its interactive area.
-type WidgetHover struct {
-	Window string `json:"window"` // the widget window's name; each widget filters on its own
-	Hover  bool   `json:"hover"`
+// WidgetReveal tells one widget window that it was revealed (cursor pushed into the screen
+// corner) or hidden again (cursor moved away). With config.AlwaysShow the widget is drawn anyway.
+type WidgetReveal struct {
+	Window   string `json:"window"` // the widget window's name; each widget filters on its own
+	Revealed bool   `json:"revealed"`
 }
 
 // Geometry of the corner widget, in DIP. The widget window is a Size×Size square whose outer corner
-// sits on the screen corner (inside the work area). The interactive area is the quarter disc
-// centred on that corner: the cursor enters at CollapsedRadius and, once expanded, leaves beyond
-// ExpandedRadius. Go uses this for click-through; the frontend draws with the same numbers.
+// sits on the configured corner of the screen's work area; the widget is the quarter disc of
+// Radius centred on that corner. The frontend draws with these numbers; Go uses them for:
+//   - reveal: the cursor gets within WidgetHotCorner of the screen's real corner (which, with the
+//     taskbar on that edge, is on the taskbar), and stays revealed while within
+//     Radius+WidgetLeaveMargin of the widget's corner;
+//   - click-through: the window takes the mouse (wheel, right-click) only while the widget is
+//     shown and the cursor is on the disc, so a hidden widget never blocks what is under it.
 type WidgetGeometry struct {
-	Corner          config.Corner `json:"corner"`
-	Size            int           `json:"size"`
-	CollapsedRadius int           `json:"collapsedRadius"`
-	ExpandedRadius  int           `json:"expandedRadius"`
+	Corner config.Corner `json:"corner"`
+	Size   int           `json:"size"`
+	Radius int           `json:"radius"`
 }
 
 const (
-	WidgetSize            = 200
-	WidgetCollapsedRadius = 64
-	WidgetExpandedRadius  = 196
+	WidgetSize        = 72
+	WidgetRadius      = 64
+	WidgetHotCorner   = 8
+	WidgetLeaveMargin = 24
 )
 
 // Event names. Payload types are registered in init so the binding generator types them.
@@ -64,7 +69,7 @@ const (
 	EventUsageSnapshot  = "usage:snapshot"   // provider.Snapshot of the active provider
 	EventWakeLockStatus = "wakelock:status"  // wakelock.Status
 	EventSettings       = "settings:changed" // Settings, after any settings or provider change
-	EventWidgetHover    = "widget:hover"     // WidgetHover
+	EventWidgetReveal   = "widget:reveal"    // WidgetReveal
 )
 
 // Window names and the frontend view each one loads ("/?view=<view>").
@@ -86,5 +91,5 @@ func init() {
 	application.RegisterEvent[provider.Snapshot](EventUsageSnapshot)
 	application.RegisterEvent[wakelock.Status](EventWakeLockStatus)
 	application.RegisterEvent[Settings](EventSettings)
-	application.RegisterEvent[WidgetHover](EventWidgetHover)
+	application.RegisterEvent[WidgetReveal](EventWidgetReveal)
 }

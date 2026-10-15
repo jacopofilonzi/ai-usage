@@ -17,5 +17,5 @@ export type {
     ScreenInfo,
     Settings,
     WidgetGeometry,
-    WidgetHover
+    WidgetReveal
 } from "./models.js";
