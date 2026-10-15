@@ -94,7 +94,7 @@ type Dict = { [K in keyof typeof en]: string };
 const it: Dict = {
   appName: "AI Usage",
 
-  limitSession: "Sessione {h}h",
+  limitSession: "{h}h",
   limitWeekly: "Settimanale",
   limitWeeklyModel: "Settimanale · {model}",
   limitOther: "Limite",
