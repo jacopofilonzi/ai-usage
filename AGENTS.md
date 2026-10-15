@@ -159,5 +159,9 @@ and align this project's copies with it:
 - The widget shows the 5-hour window first (outer bold ring and the percentage); the weekly ring is inside and
   thinner; per-model limits are only in the tooltip.
 - `go vet` for Linux/macOS of packages importing Wails needs `-tags server` (cgo-free build); `make check` does it.
+- Codex (checked against v0.162, Oct 2026) still writes plain `sessions/YYYY/MM/DD/rollout-*.jsonl`. Two
+  features under development and off by default would change that: `local_thread_store_compression` (`.jsonl.zst`)
+  and `background_paginated_rollout_migration` (SQLite-backed history). If Codex usage stops showing, check them
+  first. `primary`/`secondary` are not fixed to 5h/weekly: the parser goes by `window_minutes`.
 - The Claude usage response contains codenamed and dollar-based windows (`iguana_necktie`, …): they are filtered
   out on purpose.

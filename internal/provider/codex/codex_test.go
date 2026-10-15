@@ -6,6 +6,13 @@ package codex
 // RateLimitSnapshot, RateLimitWindow) for current.jsonl, and from the 2025 format with
 // "resets_in_seconds" and 299-minute windows documented by
 // https://github.com/xiangz19/codex-ratelimit for legacy.jsonl.
+//
+// real_full.jsonl, swapped.jsonl and primary_only.jsonl reproduce the shapes seen in real rollouts
+// published as test fixtures by other Codex usage tools (values and ids changed):
+// full current fields (limit_id, plan_type, credits…) and a half-written last line from
+// github.com/wadackel/dotfiles (home/programs/codex/fixtures/rate-limits-ok.jsonl), weekly window
+// as primary and 5-hour as secondary from github.com/bbastia/quotabar
+// (NativeApp/QuotaBarTests/Fixtures/codex-session.jsonl), a single window from github.com/crup/runrate.
 
 import (
 	"context"
@@ -93,6 +100,45 @@ func TestPollLegacyFormat(t *testing.T) {
 	// Resets at 11:30 + 1800 s = now: the window already rolled over.
 	if w.Kind != provider.KindWeekly || w.UsedPct != 0 || w.ResetsAt != nil {
 		t.Errorf("weekly = %+v", w)
+	}
+}
+
+func TestPollRealShapes(t *testing.T) {
+	cases := []struct {
+		fixture string
+		want    []provider.Limit // ResetsAt checked for presence only
+	}{
+		{"real_full.jsonl", []provider.Limit{
+			{ID: "primary", Kind: provider.KindSession, WindowMinutes: 300, UsedPct: 32.4},
+			{ID: "secondary", Kind: provider.KindWeekly, WindowMinutes: 10080, UsedPct: 5.6},
+		}},
+		// Order follows the window length, not primary/secondary.
+		{"swapped.jsonl", []provider.Limit{
+			{ID: "secondary", Kind: provider.KindSession, WindowMinutes: 300, UsedPct: 44.5},
+			{ID: "primary", Kind: provider.KindWeekly, WindowMinutes: 10080, UsedPct: 11},
+		}},
+		{"primary_only.jsonl", []provider.Limit{
+			{ID: "primary", Kind: provider.KindSession, WindowMinutes: 300, UsedPct: 1},
+		}},
+	}
+	for _, c := range cases {
+		t.Run(c.fixture, func(t *testing.T) {
+			home := t.TempDir()
+			writeRollout(t, home, "2026/10/15", "rollout-2026-10-15T11-20-00-x.jsonl", fixture(t, c.fixture), testNow)
+			got, err := testProvider(home).Poll(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(got) != len(c.want) {
+				t.Fatalf("got %+v", got)
+			}
+			for i, w := range c.want {
+				g := got[i]
+				if g.ID != w.ID || g.Kind != w.Kind || g.WindowMinutes != w.WindowMinutes || g.UsedPct != w.UsedPct || g.ResetsAt == nil {
+					t.Errorf("limit %d = %+v, want %+v with a reset time", i, g, w)
+				}
+			}
+		})
 	}
 }
 
