@@ -8,8 +8,6 @@
 		<string>This is a comment</string>
 		<key>CFBundleIconFile</key>
 		<string>icons</string>
-		<key>CFBundleIconName</key>
-		<string>appicon</string>
 		<key>CFBundleIdentifier</key>
 		<string>com.jacopofilonzi.ai-usage</string>
 		<key>CFBundleName</key>
