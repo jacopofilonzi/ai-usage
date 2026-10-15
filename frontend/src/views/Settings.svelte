@@ -94,6 +94,18 @@
 
         <div class="setting-row">
           <div class="min-w-0">
+            <div class="text-sm font-medium">{app.t("alwaysShow")}</div>
+            <div class="text-xs text-muted">{app.t("alwaysShowHint")}</div>
+          </div>
+          <Toggle
+            checked={config.always_show}
+            label={app.t("alwaysShow")}
+            onchange={(always_show) => app.saveConfig({ always_show })}
+          />
+        </div>
+
+        <div class="setting-row">
+          <div class="min-w-0">
             <div class="text-sm font-medium">{app.t("monitor")}</div>
             <div class="text-xs text-muted">{app.t("monitorHint")}</div>
           </div>

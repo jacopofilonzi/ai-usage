@@ -153,8 +153,11 @@ and align this project's copies with it:
   device name (`\\.\DISPLAY1`).
 - Widgets are placed and hit-tested in physical pixels (`PhysicalWorkArea`), not DIP, because Wails' DIP layout
   is approximate on mixed-DPI setups.
-- A click-through window receives no mouse messages: hover is detected by a cursor ticker in Go and sent as the
-  `widget:hover` event; the frontend never uses DOM hover for the widget.
+- A click-through window receives no mouse messages: a cursor ticker in Go decides reveal (hot corner) and
+  click-through, and sends `widget:reveal`; the frontend never uses DOM hover for the widget. The hot corner is the
+  screen's real corner, not the widget's, so a hidden widget never pops up (or blocks clicks) while working near it.
+- The widget shows the 5-hour window first (outer bold ring and the percentage); the weekly ring is inside and
+  thinner; per-model limits are only in the tooltip.
 - `go vet` for Linux/macOS of packages importing Wails needs `-tags server` (cgo-free build); `make check` does it.
 - The Claude usage response contains codenamed and dollar-based windows (`iguana_necktie`, …): they are filtered
   out on purpose.

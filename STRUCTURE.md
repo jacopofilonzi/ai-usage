@@ -49,7 +49,7 @@ Services (generated into `frontend/bindings/.../internal/app`):
 - `WidgetService`: `Geometry`
 
 Events Go → frontend: `usage:snapshot` (Snapshot), `wakelock:status` (Status),
-`settings:changed` (Settings), `widget:hover` ({window, hover}).
+`settings:changed` (Settings), `widget:reveal` ({window, revealed}).
 
 ### Windows
 
@@ -59,13 +59,13 @@ Every window loads the same bundle; `/?view=` picks the view.
 | --- | --- | --- |
 | `settings` | `settings` | hidden at start; closing hides it; opened from the tray, a second launch, or at first run with no agent |
 | `popover` | `popover` | macOS/Linux only, attached to the tray icon |
-| `widget-<screen>` | `widget` | Windows only, one per target screen, 200×200 DIP, transparent, always on top, click-through until the cursor reaches the corner disc |
+| `widget-<screen>` | `widget` | Windows only, one per target screen: a 72×72 DIP transparent, always-on-top window with a quarter disc (radius 64). Hidden until the cursor is pushed into the screen corner, unless "always show"; click-through except while shown with the cursor on the disc |
 
 ### Data and state
 
 | What | Where |
 | --- | --- |
-| Preferences | `<user config dir>/ai-usage/config.json` → `{provider, corner, monitor, language, poll_seconds, keep_unlocked}` |
+| Preferences | `<user config dir>/ai-usage/config.json` → `{provider, corner, always_show, monitor, language, poll_seconds, keep_unlocked}` |
 | Log | `<user cache dir>/ai-usage/ai-usage.log` (+ `.log.1`) |
 | Start at login | read from the OS, never stored in the config |
 
@@ -80,6 +80,7 @@ Usage snapshots and the wake lock live only in memory. Tokens are never stored.
 | `lib/state.svelte.ts` | the `app` store (runes): initial load from the services, then kept current by events; actions |
 | `lib/i18n.ts` | EN/IT dictionaries (`it` typed from `en`) |
 | `lib/format.ts` | limit labels, percentages, countdowns, status messages, colour thresholds |
+| `lib/brand.ts` | accent colour per agent (Claude orange, Codex blue): replaces the "ok" green |
 | `lib/log.ts` | `logError`, the only console output |
-| `components/` | `Rings` (full/quarter), `Toggle`, `CornerPicker`, `WakeIcon` |
+| `components/` | `Rings` (full/quarter; bold first ring, thinner others), `Toggle`, `CornerPicker`, `WakeIcon` |
 | `views/` | `Widget`, `Popover`, `Settings` |
