@@ -2,7 +2,12 @@
 # Environment for the go tool is set with target-specific exports instead.
 
 # Packages without Wails (which needs cgo on Linux/macOS): vetted for every OS from any host.
-CROSS_PKGS := ./internal/config/... ./internal/provider/... ./internal/wakelock/... ./internal/logging/... ./internal/autostart/...
+CROSS_PKGS := ./internal/config/... ./internal/provider/... ./internal/wakelock/... ./internal/inhibit/... \
+	./internal/autostart/... ./internal/logging/... ./internal/poller/... ./internal/trayicon/... \
+	./internal/i18n/... ./internal/platform/...
+# Packages that import Wails: vetted for Linux/macOS with its cgo-free server build tag, which at
+# least type-checks the non-Windows files against the Wails API.
+WAILS_PKGS := . ./internal/app/... ./internal/tray/...
 
 .DEFAULT_GOAL := help
 .PHONY: help setup dev build bindings frontend frontend-check test fmt fmt-check vet vet-linux vet-darwin check
@@ -52,10 +57,12 @@ vet-linux: export GOOS := linux
 vet-linux: export CGO_ENABLED := 0
 vet-linux:
 	go vet $(CROSS_PKGS)
+	go vet -tags server $(WAILS_PKGS)
 
 vet-darwin: export GOOS := darwin
 vet-darwin: export CGO_ENABLED := 0
 vet-darwin:
 	go vet $(CROSS_PKGS)
+	go vet -tags server $(WAILS_PKGS)
 
 check: fmt-check bindings frontend-check frontend vet vet-linux vet-darwin test
