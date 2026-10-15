@@ -15,8 +15,8 @@ Note: Claude Code's usage endpoint is not documented by Anthropic and may change
 
 ## Install
 
-Windows: run `ai-usage-amd64-installer.exe` (per-user install, no admin rights needed).
-To build it yourself, see "Build" below.
+Windows: run `ai-usage-<version>-windows-amd64-setup.exe` (per-user install, no admin rights needed), or
+the standalone `ai-usage-<version>-windows-amd64.exe` without installing. To build them, see "Build" below.
 
 ## Use
 
@@ -38,14 +38,17 @@ make build   # production build into bin/
 
 ## Build
 
-The scripts in `scripts/` build the app and its packages into `bin/`; each must run on its own OS:
+On a new machine install only [Go](https://go.dev/dl/), then run the script for that OS: it installs what is
+still missing (Node.js, the wails3 CLI, NSIS on Windows; Xcode command line tools on macOS; compiler and
+GTK 4 / WebKitGTK 6.0 packages on Linux, via sudo), builds, and puts the results in `dist/<os>/`.
 
-| OS | Command | Output |
-| --- | --- | --- |
-| Windows | `scripts\build-windows.bat` | `ai-usage.exe`, `ai-usage-amd64-installer.exe` (NSIS needed: `winget install NSIS.NSIS`) |
-| macOS | `sh scripts/build-mac.sh` | `.app` and `.dmg` (ad-hoc signed) |
-| Linux | `sh scripts/build-linux.sh` | binary, AppImage, `.deb`, `.rpm`, Arch package |
+| OS | Command | Standalone | Installer |
+| --- | --- | --- | --- |
+| Windows | `scripts\build-windows.bat` | `ai-usage-<ver>-windows-amd64.exe` | `…-setup.exe` (per user, no admin) |
+| macOS | `sh scripts/build-mac.sh` | `ai-usage-<ver>-macos-<arch>.zip` (the .app) | `.dmg` |
+| Linux | `sh scripts/build-linux.sh` | binary and `.AppImage` | `.deb`, `.rpm`, Arch package |
 
+Builds are not code-signed: Windows SmartScreen and macOS Gatekeeper warn on first launch.
 The version comes from `info.version` in `build/config.yml`.
 
 See [STRUCTURE.md](STRUCTURE.md) for how the code is organised and [AGENTS.md](AGENTS.md) for the rules.
