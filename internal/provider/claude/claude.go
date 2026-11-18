@@ -17,6 +17,10 @@
 //     ("extra_usage", "limits", "spend", ...). Every key whose value is an object with a non-null
 //     numeric "utilization" is treated as a window; everything else is ignored, so new keys never
 //     break parsing.
+//   - Desktop fallback: when Claude Code runs inside the Claude desktop app, the app refreshes the
+//     token in memory and .credentials.json goes stale. If the token route fails for that reason,
+//     the five-hour and weekly figures come from the desktop app's plan-usage-history.json instead
+//     (no token involved, no reset times), see desktop.go.
 package claude
 
 import (
@@ -24,6 +28,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -52,16 +57,20 @@ type Provider struct {
 	// readCredentials returns the raw credentials JSON, or an error wrapping os.ErrNotExist when
 	// there are none.
 	readCredentials func(dir string) ([]byte, error)
+	// readDesktopHistory returns the Claude desktop app's plan-usage-history.json, or an error
+	// wrapping os.ErrNotExist. Nil disables the desktop fallback (see desktop.go).
+	readDesktopHistory func() ([]byte, error)
 }
 
 // New returns a Provider that talks to the real API and reads the real config dir.
 func New() *Provider {
 	return &Provider{
-		client:          &http.Client{Timeout: requestTimeout},
-		baseURL:         defaultBaseURL,
-		now:             time.Now,
-		configDir:       defaultConfigDir,
-		readCredentials: readCredentials,
+		client:             &http.Client{Timeout: requestTimeout},
+		baseURL:            defaultBaseURL,
+		now:                time.Now,
+		configDir:          defaultConfigDir,
+		readCredentials:    readCredentials,
+		readDesktopHistory: readDesktopHistory,
 	}
 }
 
@@ -79,8 +88,25 @@ func (p *Provider) Detect() bool {
 	return err == nil && info.IsDir()
 }
 
-// Poll reads the token from disk and asks the usage endpoint for the current limits.
+// Poll reads the token from disk and asks the usage endpoint for the current limits. When there is
+// no usable token (missing, expired or rejected) it falls back to the Claude desktop app's own usage
+// samples, see desktop.go; if those are missing or old too, the token error is returned.
 func (p *Provider) Poll(ctx context.Context) ([]provider.Limit, error) {
+	limits, err := p.pollAPI(ctx)
+	if err == nil || !(errors.Is(err, provider.ErrNotLoggedIn) || errors.Is(err, provider.ErrUnauthorized)) {
+		return limits, err
+	}
+	desktop, derr := p.desktopUsage()
+	if derr != nil {
+		if !errors.Is(derr, errNoDesktopUsage) {
+			slog.Debug("claude: desktop fallback failed", "err", derr)
+		}
+		return nil, err
+	}
+	return desktop, nil
+}
+
+func (p *Provider) pollAPI(ctx context.Context) ([]provider.Limit, error) {
 	dir, err := p.configDir()
 	if err != nil {
 		return nil, fmt.Errorf("claude: locate config dir: %w", err)

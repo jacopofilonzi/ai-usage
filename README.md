@@ -8,6 +8,9 @@ windows of Claude Code (and Codex), as rings in a corner of the screen (Windows)
   the settings.
 - **Uses your agent's own login.** AI Usage reads the credentials the agent already keeps and never refreshes
   or stores them. If the token has expired, it shows the last known values until you open the agent again.
+  On Windows, if you use Claude Code from the Claude desktop app (whose login does not update the CLI's
+  token file), the 5-hour and weekly figures come from the desktop app's own usage record while it is
+  open, without reset times.
 - **Keep awake** for 5–120 minutes or indefinitely, optionally keeping the display on.
 - English and Italian.
 
