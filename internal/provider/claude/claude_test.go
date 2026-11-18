@@ -42,6 +42,7 @@ func newTestProvider(t *testing.T, creds []byte, srv *httptest.Server) *Provider
 	p := New()
 	p.configDir = func() (string, error) { return dir, nil }
 	p.readCredentials = readCredentialsFile
+	p.readDesktopHistory = nil // never the real desktop app's file
 	p.now = func() time.Time { return fixtureNow }
 	if srv != nil {
 		p.baseURL = srv.URL
