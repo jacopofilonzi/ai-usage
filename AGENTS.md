@@ -163,5 +163,11 @@ and align this project's copies with it:
   features under development and off by default would change that: `local_thread_store_compression` (`.jsonl.zst`)
   and `background_paginated_rollout_migration` (SQLite-backed history). If Codex usage stops showing, check them
   first. `primary`/`secondary` are not fixed to 5h/weekly: the parser goes by `window_minutes`.
+- **Claude Code run from the Claude desktop app** (checked against CLI 2.1.327, Nov 2026) gets its token from
+  the desktop app in memory (`CLAUDE_CODE_SDK_HAS_HOST_AUTH_REFRESH=1`): `~/.claude/.credentials.json` is not
+  refreshed and ends up expired or without `accessToken`. The desktop token is encrypted (`oauth:tokenCache` in
+  its `config.json`) and must not be read; the provider falls back to the desktop app's secret-free
+  `plan-usage-history.json` (`fh` = five-hour, `sd` = seven-day). The fallback is Windows only: the file's path on
+  macOS/Linux has not been checked.
 - The Claude usage response contains codenamed and dollar-based windows (`iguana_necktie`, …): they are filtered
   out on purpose.

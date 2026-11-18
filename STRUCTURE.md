@@ -22,7 +22,7 @@ repo/
 | Package | Responsibility |
 | --- | --- |
 | `provider` | Contract: `Provider`, `Limit`, `Kind`, `Snapshot`, `Status`, sentinel errors. |
-| `provider/claude` | Reads the token Claude Code keeps (`$CLAUDE_CONFIG_DIR` or `~/.claude/.credentials.json`; macOS Keychain first) and calls `GET https://api.anthropic.com/api/oauth/usage` (undocumented). Shows only `five_hour`, `seven_day`, `seven_day_{opus,sonnet}`. Polls every 2 min. |
+| `provider/claude` | Reads the token Claude Code keeps (`$CLAUDE_CONFIG_DIR` or `~/.claude/.credentials.json`; macOS Keychain first) and calls `GET https://api.anthropic.com/api/oauth/usage` (undocumented). Shows only `five_hour`, `seven_day`, `seven_day_{opus,sonnet}`. Polls every 2 min. Without a usable token (Claude Code run from the desktop app) it falls back to the desktop app's `plan-usage-history.json` (Windows: `%LOCALAPPDATA%\Claude-Data\*\`, `%APPDATA%\Claude\`; newest sample if ≤ 20 min old; no reset times): `desktop.go`, `desktop_{windows,other}.go`. |
 | `provider/codex` | Reads the last `token_count` event with `rate_limits` from the newest `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-*.jsonl` (tail only). Polls every 30 s. No network. |
 | `poller` | Polls the active provider only. Keeps a per-provider cache, maps errors to statuses, backs off on 429 (max 15 min). |
 | `config` | `config.json` preferences, atomic save. Invalid fields fall back to the defaults. |
